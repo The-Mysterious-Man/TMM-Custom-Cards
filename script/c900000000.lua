@@ -134,8 +134,7 @@ function s.efilter(e,te)
 	return te:GetOwner()~=e:GetOwner()
 end
 function s.batfilter(e,c)
-	return c:IsAttribute(ATTRIBUTE_LIGHT) or c:IsAttribute(ATTRIBUTE_DARK) or c:IsAttribute(ATTRIBUTE_WATER) or c:IsAttribute(ATTRIBUTE_FIRE) or c:IsAttribute(ATTRIBUTE_EARTH) or
-c:IsAttribute(ATTRIBUTE_WIND)
+	return c:IsAttribute(0x2f)
 end
 function s.filter(c)
 	return c:IsFaceup() and not c:IsHasEffect(id)
