@@ -134,7 +134,7 @@ function s.efilter(e,te)
 	return te:GetOwner()~=e:GetOwner()
 end
 function s.batfilter(e,c)
-	return c:IsAttribute(ATTRIBUTE_DIVINE)
+	return c:IsAttribute(ATTRIBUTE_LIGHT) or c:IsAttribute(ATTRIBUTE_DARK) or c:IsAttribute(ATTRIBUTE_FIRE) or c:IsAttribute(ATTRIBUTE_WATER) or c:IsAttribute(ATTRIBUTE_WIND) or c:IsAttribute(ATTRIBUTE_EARTH)
 end
 function s.filter(c)
 	return c:IsFaceup() and not c:IsHasEffect(id)
@@ -149,6 +149,6 @@ function s.adval(e,c)
 			g:RemoveCard(e:GetHandler())
 			tg,val=g:GetMaxGroup(Card.GetAttack)
 		end
-		return
+		return val+0
 	end
 end
