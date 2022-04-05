@@ -134,7 +134,7 @@ function s.efilter(e,te)
 	return te:GetOwner()~=e:GetOwner()
 end
 function s.batfilter(e,c)
-	return c:IsAttribute(0x2f)
+	return c:IsAttribute(ATTRIBUTE_DIVINE)
 end
 function s.filter(c)
 	return c:IsFaceup() and not c:IsHasEffect(id)
@@ -149,6 +149,6 @@ function s.adval(e,c)
 			g:RemoveCard(e:GetHandler())
 			tg,val=g:GetMaxGroup(Card.GetAttack)
 		end
-		return val
+		return
 	end
 end
