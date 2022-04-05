@@ -149,6 +149,5 @@ function s.adval(e,c)
 			g:RemoveCard(e:GetHandler())
 			tg,val=g:GetMaxGroup(Card.GetAttack)
 		end
-		return val+0
 	end
 end
