@@ -1,153 +1,103 @@
---Zorc Necrophades
+--Great Darkness Thief
 local s,id=GetID()
 function s.initial_effect(c)
-	c:EnableReviveLimit()
-	--Special Summon condition
+	--Add 1 "Great Darkness Beast" to the hand
 	local e1=Effect.CreateEffect(c)
-	e1:SetType(EFFECT_TYPE_SINGLE)
-	e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
-	e1:SetCode(EFFECT_SPSUMMON_CONDITION)
+	e1:SetDescription(aux.Stringid(id,1))
+	e1:SetCategory(CATEGORY_TOHAND+CATEGORY_SEARCH)
+	e1:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
+	e1:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_DAMAGE_STEP)
+	e1:SetCode(EVENT_SUMMON_SUCCESS)
+	e1:SetTarget(s.thtg)
+	e1:SetOperation(s.thop)
 	c:RegisterEffect(e1)
-	--Special Summon procedure
-	local e2=Effect.CreateEffect(c)
-	e2:SetType(EFFECT_TYPE_FIELD)
-	e2:SetProperty(EFFECT_FLAG_UNCOPYABLE+EFFECT_FLAG_CANNOT_DISABLE)
-	e2:SetCode(EFFECT_SPSUMMON_PROC)
-	e2:SetRange(LOCATION_HAND)
-	e2:SetCondition(s.spcon)
-	e2:SetTarget(s.sptg)
-	e2:SetOperation(s.spop)
+	local e2=e1:Clone()
+	e2:SetCode(EVENT_FLIP)
 	c:RegisterEffect(e2)
-	--summon cannot be negated
+	--Equip
 	local e3=Effect.CreateEffect(c)
-	e3:SetType(EFFECT_TYPE_SINGLE)
-	e3:SetCode(EFFECT_CANNOT_DISABLE_SPSUMMON)
-	e3:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
+	e3:SetDescription(aux.Stringid(id,0))
+	e3:SetCategory(CATEGORY_EQUIP)
+	e3:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_TRIGGER_O)
+	e3:SetCode(EVENT_DESTROYED)
+	e3:SetProperty(EFFECT_FLAG_CARD_TARGET+EFFECT_FLAG_DAMAGE_STEP+EFFECT_FLAG_DELAY)
+	e3:SetRange(LOCATION_MZONE)
+	e3:SetTarget(s.eqtg)
+	e3:SetOperation(s.eqop)
 	c:RegisterEffect(e3)
-	--immune
+	aux.AddEREquipLimit(c,nil,aux.FilterBoolFunction(Card.IsType,TYPE_MONSTER),aux.EquipByEffectAndLimitRegister,e3)
+	--Destroy
 	local e4=Effect.CreateEffect(c)
-	e4:SetType(EFFECT_TYPE_SINGLE)
-	e4:SetCode(EFFECT_IMMUNE_EFFECT)
-	e4:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
+	e4:SetDescription(aux.Stringid(id,1))
+	e4:SetCategory(CATEGORY_DESTROY)
+	e4:SetType(EFFECT_TYPE_QUICK_O)
 	e4:SetRange(LOCATION_MZONE)
-	e4:SetCondition(s.econ)
-	e4:SetValue(s.efilter)
+	e4:SetCountLimit(1)
+	e4:SetCost(s.descost)
+	e4:SetTarget(s.destg)
+	e4:SetOperation(s.desop)
 	c:RegisterEffect(e4)
-	--Cannot be Tributed
-	local e5=Effect.CreateEffect(c)
-	e5:SetType(EFFECT_TYPE_SINGLE)
-	e5:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
-	e5:SetCode(EFFECT_UNRELEASABLE_SUM)
-	e5:SetRange(LOCATION_MZONE)
-	e5:SetValue(1)
-	c:RegisterEffect(e5)
-	local e6=e5:Clone()
-	e6:SetCode(EFFECT_UNRELEASABLE_NONSUM)
-	c:RegisterEffect(e6)
-	--Cannot be used as material for a Fusion/Synchro/Xyz/Link Summon
-	local e7=Effect.CreateEffect(c)
-	e7:SetType(EFFECT_TYPE_SINGLE)
-	e7:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
-	e7:SetCode(EFFECT_CANNOT_BE_MATERIAL)
-	e7:SetValue(aux.cannotmatfilter(SUMMON_TYPE_FUSION,SUMMON_TYPE_SYNCHRO,SUMMON_TYPE_XYZ,SUMMON_TYPE_LINK))
-	c:RegisterEffect(e7)
-	--Cannot be destroyed by battle
-	local e8=Effect.CreateEffect(c)
-	e8:SetType(EFFECT_TYPE_SINGLE)
-	e8:SetCode(EFFECT_INDESTRUCTABLE_BATTLE)
-	e8:SetValue(s.batfilter)
-	c:RegisterEffect(e8)
-	--atk
-	local e9=Effect.CreateEffect(c)
-	e9:SetType(EFFECT_TYPE_SINGLE)
-	e9:SetCode(EFFECT_SET_ATTACK_FINAL)
-	e9:SetProperty(EFFECT_FLAG_SINGLE_RANGE+EFFECT_FLAG_REPEAT+EFFECT_FLAG_DELAY)
-	e9:SetRange(LOCATION_MZONE)
-	e9:SetValue(s.adval)
-	c:RegisterEffect(e9)
-	local e10=e9:Clone()
-	e10:SetCode(EFFECT_SET_DEFENSE_FINAL)
-	c:RegisterEffect(e10)
-	-- Cannot Lose the Duel
-	local e11=Effect.CreateEffect(c)
-	e11:SetType(EFFECT_TYPE_FIELD)
-	e11:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
-	e11:SetCode(EFFECT_CANNOT_LOSE_LP)
-	e11:SetRange(LOCATION_MZONE)
-	e11:SetTargetRange(1,0)
-	e11:SetValue(1)
-	c:RegisterEffect(e11)
-	local e12=e11:Clone()
-	e12:SetCode(EFFECT_CANNOT_LOSE_DECK)
-	c:RegisterEffect(e12)
-	local e13=e12:Clone()
-	e13:SetCode(EFFECT_CANNOT_LOSE_EFFECT)
-	c:RegisterEffect(e13)
 end
-function s.spcon(e,c)
-	if c==nil then return true end
-	local tp=e:GetHandlerPlayer()
-	local rg=Duel.GetMatchingGroup(Card.IsAbleToRemoveAsCost,tp,LOCATION_HAND+LOCATION_DECK+LOCATION_GRAVE+LOCATION_ONFIELD+LOCATION_EXTRA,0,c,POS_FACEDOWN)
-	return Duel.GetMZoneCount(tp,rg)>0 and #rg>4 and aux.SelectUnselectGroup(rg,e,tp,55,#rg,aux.ChkfMMZ(1),0)
+function s.thfilter(c)
+	return c:IsCode(900000001) and c:IsAbleToHand()
 end
-function s.mmzfilter(c,tp)
-	return c:IsInMainMZone(tp) and c:IsAbleToRemoveAsCost(POS_FACEDOWN)
+function s.thtg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.IsExistingMatchingCard(s.thfilter,tp,LOCATION_DECK,0,1,nil) end
+	Duel.SetOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,LOCATION_DECK)
 end
-function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk,c)
-	local rg=Duel.GetMatchingGroup(Card.IsAbleToRemoveAsCost,tp,LOCATION_HAND+LOCATION_DECK+LOCATION_GRAVE+LOCATION_ONFIELD+LOCATION_EXTRA,0,c,POS_FACEDOWN)
-	local g1=Group.CreateGroup()
-	local g2=Group.CreateGroup()
-	local ft=Duel.GetLocationCount(tp,LOCATION_MZONE)
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
-	if ft<=0 then
-		g1=Duel.SelectMatchingCard(tp,s.mmzfilter,tp,LOCATION_MZONE,0,1,1,true,c,tp)
-		if g1 and #g1>0 then
-			Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_REMOVE)
-			g2=Duel.SelectMatchingCard(tp,Card.IsAbleToRemoveAsCost,tp,LOCATION_HAND+LOCATION_DECK+LOCATION_GRAVE+LOCATION_ONFIELD+LOCATION_EXTRA,0,4,#rg,true,Group.FromCards(c,g1:GetFirst()),POS_FACEDOWN)
-			if g2 and #g2>0 then
-				g1:Merge(g2)
-				g1:KeepAlive()
-				e:SetLabelObject(g1)
-				return true
-			end
-		end
-	else
-		g1=Duel.SelectMatchingCard(tp,Card.IsAbleToRemoveAsCost,tp,LOCATION_HAND+LOCATION_DECK+LOCATION_GRAVE+LOCATION_ONFIELD+LOCATION_EXTRA,0,55,#rg,true,c,POS_FACEDOWN)
-		if g1 and #g1>0 then
-			g1:KeepAlive()
-			e:SetLabelObject(g1)
-			return true
-		end
+function s.thop(e,tp,eg,ep,ev,re,r,rp)
+	local tc=Duel.GetFirstMatchingCard(s.thfilter,tp,LOCATION_DECK,0,nil)
+	if tc then
+		Duel.SendtoHand(tc,nil,REASON_EFFECT)
+		Duel.ConfirmCards(1-tp,tc)
 	end
-	return false
 end
-function s.spop(e,tp,eg,ep,ev,re,r,rp,c)
-	local g=e:GetLabelObject()
-	if not g then return end
-	Duel.Remove(g,POS_FACEDOWN,REASON_COST)
-	g:DeleteGroup()
+function s.filter(c,e,tp)
+	return c:IsType(TYPE_MONSTER) and c:IsPreviousLocation(LOCATION_MZONE) and c:IsPreviousControler(1-tp)
+		and c:IsLocation(LOCATION_GRAVE) and c:IsReason(REASON_EFFECT+REASON_BATTLE) and c:IsCanBeEffectTarget(e) and not c:IsForbidden()
 end
-function s.econ(e)
-	return not e:GetHandler():IsStatus(STATUS_BATTLE_DESTROYED)
-end
-function s.efilter(e,te)
-	return te:GetOwner()~=e:GetOwner()
-end
-function s.batfilter(e,c)
-	return c:IsAttribute(ATTRIBUTE_LIGHT) or c:IsAttribute(ATTRIBUTE_DARK) or c:IsAttribute(ATTRIBUTE_FIRE) or c:IsAttribute(ATTRIBUTE_WATER) or c:IsAttribute(ATTRIBUTE_WIND) or c:IsAttribute(ATTRIBUTE_EARTH)
-end
-function s.filter(c)
-	return c:IsFaceup() and not c:IsHasEffect(id)
-end
-function s.adval(e,c)
-	local g=Duel.GetMatchingGroup(s.filter,0,LOCATION_MZONE,LOCATION_MZONE,nil)
-	if #g==0 then 
-		return
+function s.eqtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+	if chkc then return eg:IsContains(chkc) and s.filter(chkc,e,tp) end
+	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_SZONE)>0
+		and eg:IsExists(s.filter,1,nil,e,tp) end
+	local g=eg:Filter(s.filter,nil,e,tp)
+	local tc=nil
+	if #g>1 then
+		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TARGET)
+		tc=g:Select(tp,1,1,nil)
 	else
-		local tg,val=g:GetMaxGroup(Card.GetAttack)
-		if not tg:IsExists(aux.TRUE,1,e:GetHandler()) then
-			g:RemoveCard(e:GetHandler())
-			tg,val=g:GetMaxGroup(Card.GetAttack)
-		end
+		tc=g:GetFirst()
 	end
+	Duel.SetTargetCard(tc)
+	Duel.SetOperationInfo(0,CATEGORY_LEAVE_GRAVE,tc,1,0,0)
+end
+function s.eqop(e,tp,eg,ep,ev,re,r,rp)
+	local c=e:GetHandler()
+	local tc=Duel.GetFirstTarget()
+	if c:IsRelateToEffect(e) and c:IsFaceup() and tc and tc:IsRelateToEffect(e) then
+		aux.EquipByEffectAndLimitRegister(c,e,tp,tc)
+	end
+end
+function s.tgfilter(c,tp)
+	return c:IsAbleToGraveAsCost()
+		and Duel.IsExistingMatchingCard(s.desfilter,tp,0,LOCATION_MZONE,1,nil,c:GetRace())
+end
+function s.desfilter(c,rc)
+	return c:IsFaceup() and c:IsRace(rc)
+end
+function s.descost(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return e:GetHandler():GetEquipGroup():IsExists(s.tgfilter,1,nil,tp) end
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TOGRAVE)
+	local g=e:GetHandler():GetEquipGroup():FilterSelect(tp,s.tgfilter,1,1,nil,tp)
+	e:SetLabel(g:GetFirst():GetRace())
+	Duel.SendtoGrave(g,REASON_COST)
+end
+function s.destg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return true end
+	local g=Duel.GetMatchingGroup(s.desfilter,tp,0,LOCATION_MZONE,nil,e:GetLabel())
+	Duel.SetOperationInfo(0,CATEGORY_DESTROY,g,#g,0,0)
+end
+function s.desop(e,tp,eg,ep,ev,re,r,rp)
+	local g=Duel.GetMatchingGroup(s.desfilter,tp,0,LOCATION_MZONE,nil,e:GetLabel())
+	Duel.Destroy(g,REASON_EFFECT)
 end
