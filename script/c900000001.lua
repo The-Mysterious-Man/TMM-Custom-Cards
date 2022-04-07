@@ -33,7 +33,7 @@ function s.initial_effect(c)
 	c:RegisterEffect(e3)
 end
 function s.filter(c)
-	return c:IsFaceup() and c:IsCode(84824601)
+	return c:IsFaceup() and c:IsCode(900000000)
 end
 function s.eqtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
 	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(tp) and s.filter(chkc) end
@@ -103,7 +103,7 @@ function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
 	Duel.SetOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,LOCATION_DECK)
 end
 function s.filter(c)
-	return c:IsCode(84824601) and c:IsAbleToHand()
+	return c:IsCode(900000002) and c:IsAbleToHand()
 end
 function s.operation(e,tp,eg,ep,ev,re,r,rp)
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
