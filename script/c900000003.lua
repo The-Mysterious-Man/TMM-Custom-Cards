@@ -57,7 +57,7 @@ function s.initial_effect(c)
 	c:RegisterEffect(e10)
 end
 function s.efilter(e,c,te)
-	return te:IsActiveType(TYPE_MONSTER) and te:IsActiveType(TYPE_SPELL) and te:IsActiveType(TYPE_TRAP) and not c:IsAttribute(ATTRIBUTE_DIVINE)
+		return te:GetOwner()~=e:GetOwner() and not c:IsAttribute(ATTRIBUTE_DIVINE)
 end
 function s.indes(e,c)
 	return not c:IsAttribute(ATTRIBUTE_DIVINE)

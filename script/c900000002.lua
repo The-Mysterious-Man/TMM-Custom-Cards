@@ -1,8 +1,6 @@
 --Great Darkness Fiend
 local s,id=GetID()
 function s.initial_effect(c)
-	--Can only control one
-	c:SetUniqueOnField(1,0,id)
 	--equip
 	local e1=Effect.CreateEffect(c)
 	e1:SetDescription(aux.Stringid(id,0))
@@ -19,25 +17,19 @@ function s.initial_effect(c)
 	e2:SetCode(EFFECT_ATTACK_ALL)
 	e2:SetValue(1)
 	c:RegisterEffect(e2)
-	--Prevent destruction by battle
+	--A monster equipped with this card cannot be destroyed by card effect
 	local e3=Effect.CreateEffect(c)
 	e3:SetType(EFFECT_TYPE_EQUIP)
-	e3:SetCode(EFFECT_INDESTRUCTABLE_BATTLE)
+	e3:SetCode(EFFECT_INDESTRUCTABLE_EFFECT)
 	e3:SetValue(1)
 	c:RegisterEffect(e3)
-	--A monster equipped with this card cannot be destroyed by card effect
+	--A monster equipped with this card cannot be targeted by opponent's card effects
 	local e4=Effect.CreateEffect(c)
 	e4:SetType(EFFECT_TYPE_EQUIP)
-	e4:SetCode(EFFECT_INDESTRUCTABLE_EFFECT)
-	e4:SetValue(1)
+	e4:SetCode(EFFECT_CANNOT_BE_EFFECT_TARGET)
+	e4:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
+	e4:SetValue(aux.tgoval)
 	c:RegisterEffect(e4)
-	--A monster equipped with this card cannot be targeted by opponent's card effects
-	local e5=Effect.CreateEffect(c)
-	e5:SetType(EFFECT_TYPE_EQUIP)
-	e5:SetCode(EFFECT_CANNOT_BE_EFFECT_TARGET)
-	e5:SetProperty(EFFECT_FLAG_IGNORE_IMMUNE)
-	e5:SetValue(aux.tgoval)
-	c:RegisterEffect(e5)
 end
 s.listed_names={900000000,900000002}
 function s.efilter(c)
