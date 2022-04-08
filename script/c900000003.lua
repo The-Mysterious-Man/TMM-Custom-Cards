@@ -12,10 +12,10 @@ function s.initial_effect(c)
 	--immune
 	local e2=Effect.CreateEffect(c)
 	e2:SetType(EFFECT_TYPE_SINGLE)
-	e2:SetProperty(EFFECT_FLAG_SINGLE_RANGE+EFFECT_FLAG_UNCOPYABLE)
+	e2:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
 	e2:SetRange(LOCATION_MZONE)
 	e2:SetCode(EFFECT_IMMUNE_EFFECT)
-	e2:SetValue(s.efilter)
+	e2:SetValue(s.indes)
 	c:RegisterEffect(e2)
 	--indes
 	local e3=Effect.CreateEffect(c)
@@ -56,8 +56,8 @@ function s.initial_effect(c)
 	e10:SetCode(EFFECT_CANNOT_LOSE_EFFECT)
 	c:RegisterEffect(e10)
 end
-function s.efilter(e,c)
-	return c:IsType(TYPE_MONSTER) and not c:IsAttribute(ATTRIBUTE_DIVINE)
+function s.efilter(e,te)
+	return te:GetOwner()~=e:GetOwner()
 end
 function s.indes(e,c)
 	return not c:IsAttribute(ATTRIBUTE_DIVINE)
