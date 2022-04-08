@@ -56,8 +56,8 @@ function s.initial_effect(c)
 	e10:SetCode(EFFECT_CANNOT_LOSE_EFFECT)
 	c:RegisterEffect(e10)
 end
-function s.efilter(e,c,te)
-		return te:GetOwner()~=e:GetOwner() and not c:IsAttribute(ATTRIBUTE_DIVINE)
+function s.efilter(e,c)
+	return not c:IsAttribute(ATTRIBUTE_DIVINE)
 end
 function s.indes(e,c)
 	return not c:IsAttribute(ATTRIBUTE_DIVINE)
