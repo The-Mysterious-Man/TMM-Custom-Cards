@@ -42,7 +42,7 @@ function s.initial_effect(c)
 	e5:SetOperation(s.activate)
 	c:RegisterEffect(e5)
 end
-s.listed_names={900000000,900000002,900000003}
+s.listed_names={900000000,900000001,900000002,900000003}
 function s.tg(e,c)
 	if c:GetFlagEffect(1)==0 then
 		c:RegisterFlagEffect(1,0,0,0)
@@ -90,7 +90,7 @@ end
 function s.eqfilter(c)
 	return c:IsCode(900000001) and c:IsCode(900000002)
 end
-function s.cfilter(c)
+function s.tcfilter(c)
 	return c:IsFaceup() and c:IsCode(900000000) and c:IsReleasableByEffect()
 		and c:GetEquipGroup():FilterCount(s.eqfilter,nil)>0
 end
@@ -101,20 +101,20 @@ function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then
 		local loc=LOCATION_MZONE
 		if Duel.GetLocationCount(tp,LOCATION_MZONE)<1 then loc=0 end
-		return Duel.IsExistingMatchingCard(s.cfilter,tp,LOCATION_MZONE,loc,1,nil)
-			and Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_DECK,0,1,nil,e,tp)
+		return Duel.IsExistingMatchingCard(s.tcfilter,tp,LOCATION_MZONE,loc,1,nil)
+			and Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_HAND,0,1,nil,e,tp)
 	end
 	Duel.SetOperationInfo(0,CATEGORY_RELEASE,nil,1,0,0)
-	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_DECK)
+	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_HAND)
 end
 function s.activate(e,tp,eg,ep,ev,re,r,rp)
 	local loc=LOCATION_MZONE
 	if Duel.GetLocationCount(tp,LOCATION_MZONE)<1 then loc=0 end
 	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_RELEASE)
-	local g=Duel.SelectMatchingCard(tp,s.cfilter,tp,LOCATION_MZONE,loc,1,1,nil)
+	local g=Duel.SelectMatchingCard(tp,s.tcfilter,tp,LOCATION_MZONE,loc,1,1,nil)
 	if #g>0 and Duel.Release(g,REASON_EFFECT)>0 then
 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-		local sg=Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_DECK,0,1,1,nil,e,tp)
+		local sg=Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
 		if #sg>0 then
 			Duel.SpecialSummon(sg,0,tp,tp,true,false,POS_FACEUP)
 		end
