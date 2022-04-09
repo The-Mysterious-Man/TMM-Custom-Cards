@@ -94,7 +94,7 @@ function s.tcfilter(c)
 	return c:IsFaceup() and c:IsCode(900000000) and c:IsReleasableByEffect()
 		and c:GetEquipGroup():FilterCount(s.eqfilter,nil)>0
 end
-function s.filter(c,e,tp)
+function s.Zfilter(c,e,tp)
 	return c:IsCode(900000003) and c:IsType(TYPE_MONSTER) and c:IsCanBeSpecialSummoned(e,0,tp,true,false)
 end
 function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
@@ -102,7 +102,7 @@ function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
 		local loc=LOCATION_MZONE
 		if Duel.GetLocationCount(tp,LOCATION_MZONE)<1 then loc=0 end
 		return Duel.IsExistingMatchingCard(s.tcfilter,tp,LOCATION_MZONE,loc,1,nil)
-			and Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_HAND,0,1,nil,e,tp)
+			and Duel.IsExistingMatchingCard(s.Zfilter,tp,LOCATION_HAND,0,1,nil,e,tp)
 	end
 	Duel.SetOperationInfo(0,CATEGORY_RELEASE,nil,1,0,0)
 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_HAND)
@@ -114,7 +114,7 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
 	local g=Duel.SelectMatchingCard(tp,s.tcfilter,tp,LOCATION_MZONE,loc,1,1,nil)
 	if #g>0 and Duel.Release(g,REASON_EFFECT)>0 then
 		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-		local sg=Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
+		local sg=Duel.SelectMatchingCard(tp,s.Zfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
 		if #sg>0 then
 			Duel.SpecialSummon(sg,0,tp,tp,true,false,POS_FACEUP)
 		end
