@@ -15,7 +15,7 @@ function s.initial_effect(c)
 	e2:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
 	e2:SetRange(LOCATION_MZONE)
 	e2:SetCode(EFFECT_IMMUNE_EFFECT)
-	e2:SetValue(s.indes)
+	e2:SetValue(s.efilter)
 	c:RegisterEffect(e2)
 	--indes
 	local e3=Effect.CreateEffect(c)
