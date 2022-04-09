@@ -9,7 +9,7 @@ function s.initial_effect(c)
 	--ATTRIBUTE
 	local e2=Effect.CreateEffect(c)
 	e2:SetType(EFFECT_TYPE_FIELD)
-	e2:SetRange(LOCATION_FZONE)
+	e2:SetRange(LOCATION_SZONE)
 	e2:SetTargetRange(LOCATION_MZONE+LOCATION_GRAVE,LOCATION_MZONE+LOCATION_GRAVE)
 	e2:SetCode(EFFECT_CHANGE_ATTRIBUTE)
 	e2:SetValue(ATTRIBUTE_DARK)
@@ -19,7 +19,7 @@ function s.initial_effect(c)
 	local e3=Effect.CreateEffect(c)
 	e3:SetType(EFFECT_TYPE_SINGLE)
 	e3:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
-	e3:SetRange(LOCATION_FZONE)
+	e3:SetRange(LOCATION_SZONE)
 	e3:SetCode(EFFECT_INDESTRUCTABLE_COUNT)
 	e3:SetCountLimit(1)
 	e3:SetValue(s.valcon)
@@ -27,19 +27,20 @@ function s.initial_effect(c)
 	--Banish
 	local e4=Effect.CreateEffect(c)
 	e4:SetCategory(CATEGORY_TOHAND+CATEGORY_SEARCH)
-	e4:SetType(EFFECT_TYPE_ACTIVATE)
-	e4:SetCode(EVENT_FREE_CHAIN)
+	e4:SetType(EFFECT_TYPE_IGNITION)
+	e4:SetRange(LOCATION_SZONE)
 	e4:SetCost(s.cost)
 	e4:SetTarget(s.target)
 	e4:SetOperation(s.activate)
 	c:RegisterEffect(e4)
-	--activate
+	--Activate
 	local e5=Effect.CreateEffect(c)
-	e5:SetCategory(CATEGORY_RELEASE+CATEGORY_SPECIAL_SUMMON)
-	e5:SetType(EFFECT_TYPE_ACTIVATE)
-	e5:SetCode(EVENT_FREE_CHAIN)
-	e5:SetTarget(s.target)
-	e5:SetOperation(s.activate)
+	e5:SetCategory(CATEGORY_SPECIAL_SUMMON)
+	e5:SetType(EFFECT_TYPE_IGNITION)
+	e5:SetRange(LOCATION_SZONE)
+	e5:SetCost(s.cost2)
+	e5:SetTarget(s.target2)
+	e5:SetOperation(s.activate2)
 	c:RegisterEffect(e5)
 end
 s.listed_names={900000000,900000001,900000002,900000003}
@@ -87,36 +88,35 @@ function s.activate(e,tp,eg,ep,ev,re,r,rp)
 		Duel.ConfirmCards(1-tp,g)
 	end
 end
-function s.eqfilter(c)
-	return c:IsCode(900000001) and c:IsCode(900000002)
+function s.rfilter(c,ft,tp)
+	return c:IsCode(900000000) and c:GetEquipGroup():IsExists(Card.IsCode,1,nil,900000001) and c:GetEquipGroup():IsExists(Card.IsCode,1,nil,900000002)
 end
-function s.tcfilter(c)
-	return c:IsFaceup() and c:IsCode(900000000) and c:IsReleasableByEffect()
-		and c:GetEquipGroup():FilterCount(s.eqfilter,nil)>0
+function s.costfilter(c,ft,tp)
+	return c:IsFaceup() and c:IsCode(CARD_DARK_MAGICIAN) and (ft>0 or (c:GetSequence()<5 and c:IsControler(tp))) and (c:IsFaceup() or c:IsControler(tp))
 end
-function s.Zfilter(c,e,tp)
-	return c:IsCode(900000003) and c:IsType(TYPE_MONSTER) and c:IsCanBeSpecialSummoned(e,0,tp,true,false)
+function s.cost2(e,tp,eg,ep,ev,re,r,rp,chk)
+	e:SetLabel(1)
+	local ft=Duel.GetLocationCount(tp,LOCATION_MZONE)
+	if chk==0 then return ft>-1 and Duel.CheckReleaseGroupCost(tp,s.rfilter,1,false,nil,nil,ft,tp) end
+	local g=Duel.SelectReleaseGroupCost(tp,s.rfilter,1,1,false,nil,nil,ft,tp)
+	Duel.Release(g,REASON_COST)
 end
-function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
+function s.spfilter(c,e,tp)
+	return c:IsCode(900000003) and c:IsCanBeSpecialSummoned(e,0,tp,true,true)
+end
+function s.target2(e,tp,eg,ep,ev,re,r,rp,chk)
 	if chk==0 then
-		local loc=LOCATION_MZONE
-		if Duel.GetLocationCount(tp,LOCATION_MZONE)<1 then loc=0 end
-		return Duel.IsExistingMatchingCard(s.tcfilter,tp,LOCATION_MZONE,loc,1,nil)
-			and Duel.IsExistingMatchingCard(s.Zfilter,tp,LOCATION_HAND,0,1,nil,e,tp)
+		if e:GetLabel()==0 and Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return false end
+		e:SetLabel(0)
+		return Duel.IsExistingMatchingCard(s.spfilter,tp,LOCATION_HAND,0,1,nil,e,tp)
 	end
-	Duel.SetOperationInfo(0,CATEGORY_RELEASE,nil,1,0,0)
 	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_HAND)
 end
-function s.activate(e,tp,eg,ep,ev,re,r,rp)
-	local loc=LOCATION_MZONE
-	if Duel.GetLocationCount(tp,LOCATION_MZONE)<1 then loc=0 end
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_RELEASE)
-	local g=Duel.SelectMatchingCard(tp,s.tcfilter,tp,LOCATION_MZONE,loc,1,1,nil)
-	if #g>0 and Duel.Release(g,REASON_EFFECT)>0 then
-		Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
-		local sg=Duel.SelectMatchingCard(tp,s.Zfilter,tp,LOCATION_HAND,0,1,1,nil,e,tp)
-		if #sg>0 then
-			Duel.SpecialSummon(sg,0,tp,tp,true,false,POS_FACEUP)
-		end
+function s.activate2(e,tp,eg,ep,ev,re,r,rp)
+	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+	local tc=Duel.SelectMatchingCard(tp,aux.NecroValleyFilter(s.spfilter),tp,LOCATION_HAND,0,1,1,nil,e,tp):GetFirst()
+	if tc and Duel.SpecialSummon(tc,0,tp,tp,true,true,POS_FACEUP)>0 then
+		tc:CompleteProcedure()
 	end
 end
