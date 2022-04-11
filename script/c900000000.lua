@@ -77,6 +77,10 @@ end
 function s.immfilter(e,te)
 	return te:IsActiveType(TYPE_MONSTER)
 end
+function s.ntcon(e,c,minc)
+	if c==nil then return true end
+	return minc==0 and Duel.GetLocationCount(c:GetControler(),LOCATION_MZONE)>0
+end
 function s.nttg(e,c)
 	return c:IsLevelAbove(5) and c:IsType(TYPE_NORMAL)
 end
