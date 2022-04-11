@@ -1,87 +1,122 @@
---Great Darkness Thief
+-- Miracle of the Mystical Elf
 local s,id=GetID()
 function s.initial_effect(c)
-	--Add 1 "Great Darkness Beast" to the hand
+	--Activate
 	local e1=Effect.CreateEffect(c)
-	e1:SetDescription(aux.Stringid(id,1))
-	e1:SetCategory(CATEGORY_TOHAND+CATEGORY_SEARCH)
-	e1:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
-	e1:SetProperty(EFFECT_FLAG_DELAY+EFFECT_FLAG_DAMAGE_STEP)
-	e1:SetCode(EVENT_SUMMON_SUCCESS)
-	e1:SetTarget(s.thtg)
-	e1:SetOperation(s.thop)
+	e1:SetType(EFFECT_TYPE_ACTIVATE)
+	e1:SetCode(EVENT_FREE_CHAIN)
 	c:RegisterEffect(e1)
-	local e2=e1:Clone()
-	e2:SetCode(EVENT_FLIP)
-	c:RegisterEffect(e2)
-	--Negate
+	--Cannot Special Summon
 	local e2=Effect.CreateEffect(c)
-	e2:SetDescription(aux.Stringid(id,1))
-	e2:SetCategory(CATEGORY_DISABLE+CATEGORY_ATKCHANGE)
-	e2:SetType(EFFECT_TYPE_QUICK_O)
-	e2:SetCode(EVENT_FREE_CHAIN)
-	e2:SetProperty(EFFECT_FLAG_CARD_TARGET)
-	e2:SetRange(LOCATION_MZONE)
-	e2:SetCountLimit(1)
-	e2:SetCondition(s.discon)
-	e2:SetTarget(s.distg)
-	e2:SetOperation(s.disop)
+	e2:SetType(EFFECT_TYPE_FIELD)
+	e2:SetRange(LOCATION_SZONE)
+	e2:SetCode(EFFECT_CANNOT_SPECIAL_SUMMON)
+	e2:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+	e2:SetTargetRange(1,0)
+	e2:SetTarget(s.splimit)
 	c:RegisterEffect(e2)
+	--immune
+	local e3=Effect.CreateEffect(c)
+	e3:SetType(EFFECT_TYPE_FIELD)
+	e3:SetCode(EFFECT_IMMUNE_EFFECT)
+	e3:SetTargetRange(LOCATION_MZONE,LOCATION_MZONE)
+	e3:SetRange(LOCATION_SZONE)
+	e3:SetTarget(s.filter1)
+	e3:SetValue(s.immfilter)
+	c:RegisterEffect(e3)
+	--Atk
+	local e4=Effect.CreateEffect(c)
+	e4:SetType(EFFECT_TYPE_FIELD)
+	e4:SetCode(EFFECT_UPDATE_ATTACK)
+	e4:SetRange(LOCATION_SZONE)
+	e4:SetTargetRange(LOCATION_MZONE,LOCATION_MZONE)
+	e2:SetTarget(aux.TargetBoolFunction(Card.IsType,TYPE_NORMAL))
+	e4:SetValue(800)
+	c:RegisterEffect(e4)
+	--Def
+	local e5=e4:Clone()
+	e5:SetCode(EFFECT_UPDATE_DEFENSE)
+	c:RegisterEffect(e5)
+	--decrease tribute
+	local e6=Effect.CreateEffect(c)
+	e6:SetDescription(aux.Stringid(id,0))
+	e6:SetType(EFFECT_TYPE_FIELD)
+	e6:SetCode(EFFECT_SUMMON_PROC)
+	e6:SetRange(LOCATION_SZONE)
+	e6:SetTargetRange(LOCATION_HAND,0)
+	e6:SetCountLimit(1)
+	e6:SetCondition(s.ntcon)
+	e6:SetTarget(aux.FieldSummonProcTg(s.nttg))
+	c:RegisterEffect(e6)
+	--Draw 2
+	local e7=Effect.CreateEffect(c)
+	e7:SetCategory(CATEGORY_TODECK+CATEGORY_DRAW)
+	e7:SetProperty(EFFECT_FLAG_CARD_TARGET)
+	e7:SetType(EFFECT_TYPE_IGNITION)
+	e7:SetCode(EVENT_FREE_CHAIN)
+	e7:SetTarget(s.target)
+	e7:SetOperation(s.activate)
+	c:RegisterEffect(e7)
+	--Special summon from deck
+	local e8=Effect.CreateEffect(c)
+	e8:SetDescription(aux.Stringid(id,1))
+	e8:SetCategory(CATEGORY_SPECIAL_SUMMON)
+	e8:SetType(EFFECT_TYPE_IGNITION)
+	e8:SetRange(LOCATION_GRAVE)
+	e8:SetCost(aux.bfgcost)
+	e8:SetTarget(s.sptg)
+	e8:SetOperation(s.spop)
+	c:RegisterEffect(e8)
 end
-function s.thfilter(c)
-	return c:IsCode(900000001) and c:IsAbleToHand()
+function s.splimit(e,c,tp,sumtp,sumpos)
+	return c:GetType()~=TYPE_NORMAL
 end
-function s.thtg(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return Duel.IsExistingMatchingCard(s.thfilter,tp,LOCATION_DECK+LOCATION_GRAVE,0,1,nil) end
-	Duel.SetOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,LOCATION_DECK+LOCATION_GRAVE)
+function s.filter1(c,e,tp)
+	return c:IsType(TYPE_NORMAL) 
 end
-function s.thop(e,tp,eg,ep,ev,re,r,rp)
-	local tc=Duel.GetFirstMatchingCard(s.thfilter,tp,LOCATION_DECK+LOCATION_GRAVE,0,nil)
-	if tc then
-		Duel.SendtoHand(tc,nil,REASON_EFFECT)
-		Duel.ConfirmCards(1-tp,tc)
+function s.immfilter(e,te)
+	return te:IsActiveType(TYPE_MONSTER)
+end
+function s.nttg(e,c)
+	return c:IsLevelAbove(5) and c:IsType(TYPE_NORMAL)
+end
+function s.filter(c)
+	return c:IsType(TYPE_MONSTER) and c:IsType(TYPE_NORMAL) and c:IsAbleToDeck()
+end
+function s.target(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
+	if chkc then return chkc:IsLocation(LOCATION_GRAVE) and chkc:IsControler(tp) and s.filter(chkc) end
+	if chk==0 then return Duel.IsPlayerCanDraw(tp,2)
+		and Duel.IsExistingTarget(s.filter,tp,LOCATION_GRAVE,0,5,nil) end
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_TODECK)
+	local g=Duel.SelectTarget(tp,s.filter,tp,LOCATION_GRAVE,0,5,5,nil)
+	Duel.SetOperationInfo(0,CATEGORY_TODECK,g,#g,0,0)
+	Duel.SetOperationInfo(0,CATEGORY_DRAW,nil,0,tp,2)
+end
+function s.activate(e,tp,eg,ep,ev,re,r,rp)
+	local tg=Duel.GetChainInfo(0,CHAININFO_TARGET_CARDS)
+	if not tg or tg:FilterCount(Card.IsRelateToEffect,nil,e)~=5 then return end
+	Duel.SendtoDeck(tg,nil,0,REASON_EFFECT)
+	local g=Duel.GetOperatedGroup()
+	if g:IsExists(Card.IsLocation,1,nil,LOCATION_DECK) then Duel.ShuffleDeck(tp) end
+	local ct=g:FilterCount(Card.IsLocation,nil,LOCATION_DECK+LOCATION_EXTRA)
+	if ct==5 then
+		Duel.BreakEffect()
+		Duel.Draw(tp,2,REASON_EFFECT)
 	end
 end
-function s.discfilter(c)
-	return c:GetOriginalType() & TYPE_MONSTER ~= 0
+function s.spfilter(c,e,tp)
+	return c:IsType(TYPE_NORMAL) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
 end
-function s.discon(e)
-	return e:GetHandler():GetEquipGroup():IsExists(s.discfilter,1,nil)
+function s.sptg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_MZONE)>0
+		and Duel.IsExistingMatchingCard(s.spfilter,tp,LOCATION_DECK,0,1,nil,e,tp) end
+	Duel.SetOperationInfo(0,CATEGORY_SPECIAL_SUMMON,nil,1,tp,LOCATION_DECK)
 end
-function s.disfilter(c)
-	return c:IsFaceup() and c:IsType(TYPE_EFFECT) and not c:IsDisabled()
-end
-function s.distg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
-	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(1-tp) and s.disfilter(chkc) end
-	if chk==0 then return Duel.IsExistingTarget(s.disfilter,tp,0,LOCATION_MZONE,1,nil) end
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_NEGATE)
-	local g=Duel.SelectTarget(tp,s.disfilter,tp,0,LOCATION_MZONE,1,1,nil)
-	Duel.SetOperationInfo(0,CATEGORY_DISABLE,g,1,0,0)
-end
-function s.disop(e,tp,eg,ep,ev,re,r,rp)
-	local tc=Duel.GetFirstTarget()
-	local c=e:GetHandler()
-	if tc and tc:IsFaceup() and tc:IsRelateToEffect(e) and not tc:IsDisabled() then
-		--Negate its effects
-		local e1=Effect.CreateEffect(c)
-		e1:SetType(EFFECT_TYPE_SINGLE)
-		e1:SetCode(EFFECT_DISABLE)
-		e1:SetReset(RESET_EVENT+RESETS_STANDARD)
-		tc:RegisterEffect(e1)
-		local e2=Effect.CreateEffect(c)
-		e2:SetType(EFFECT_TYPE_SINGLE)
-		e2:SetCode(EFFECT_DISABLE_EFFECT)
-		e2:SetReset(RESET_EVENT+RESETS_STANDARD)
-		tc:RegisterEffect(e2)
-		if tc:IsImmuneToEffect(e1) or tc:IsImmuneToEffect(e2) then return end
-		Duel.AdjustInstantly(tc)
-		local atk=tc:GetAttack()/2
-		--Halve its ATK
-		local e3=Effect.CreateEffect(c)
-		e3:SetType(EFFECT_TYPE_SINGLE)
-		e3:SetCode(EFFECT_SET_ATTACK_FINAL)
-		e3:SetValue(atk)
-		e3:SetReset(RESET_EVENT+RESETS_STANDARD)
-		tc:RegisterEffect(e3)
+function s.spop(e,tp,eg,ep,ev,re,r,rp)
+	if Duel.GetLocationCount(tp,LOCATION_MZONE)<=0 then return end
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+	local g=Duel.SelectMatchingCard(tp,s.spfilter,tp,LOCATION_DECK,0,1,1,nil,e,tp)
+	if #g>0 then
+		Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)
 	end
 end
