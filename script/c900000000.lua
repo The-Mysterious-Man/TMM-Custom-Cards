@@ -49,14 +49,14 @@ function s.initial_effect(c)
 	local e7=Effect.CreateEffect(c)
 	e7:SetCategory(CATEGORY_SPECIAL_SUMMON)
 	e7:SetType(EFFECT_TYPE_IGNITION)
-	e7:SetCode(EVENT_FREE_CHAIN)
+	e7:SetCountLimit(1)
 	e7:SetRange(LOCATION_SZONE)
 	e7:SetTarget(s.target)
 	e7:SetOperation(s.activate)
 	c:RegisterEffect(e7)
 end
 function s.splimit(e,c,tp,sumtp,sumpos)
-	return c:GetType()~=TYPE_NORMAL
+	return not c:IsType(TYPE_NORMAL)
 end
 function s.incon(e)
 	return Duel.IsExistingMatchingCard(aux.FilterFaceupFunction(Card.IsType,TYPE_NORMAL),e:GetHandlerPlayer(),LOCATION_MZONE,0,1,nil)
