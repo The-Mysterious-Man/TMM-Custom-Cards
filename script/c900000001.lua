@@ -1,88 +1,80 @@
---Great Darkness Beast
+-- Mystical Guardian Elf
 local s,id=GetID()
 function s.initial_effect(c)
-	--equip
-	local e1=Effect.CreateEffect(c)
-	e1:SetDescription(aux.Stringid(id,0))
-	e1:SetType(EFFECT_TYPE_IGNITION)
-	e1:SetProperty(EFFECT_FLAG_CARD_TARGET)
-	e1:SetCategory(CATEGORY_EQUIP)
-	e1:SetRange(LOCATION_HAND)
-	e1:SetTarget(s.eqtg)
-	e1:SetOperation(s.eqop)
-	c:RegisterEffect(e1)
-	--to hand
-	local e2=Effect.CreateEffect(c)
-	e2:SetDescription(aux.Stringid(id,0))
-	e2:SetCategory(CATEGORY_SEARCH+CATEGORY_TOHAND)
-	e2:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_F)
-	e2:SetCode(EVENT_TO_GRAVE)
-	e2:SetTarget(s.target)
-	e2:SetOperation(s.operation)
-	c:RegisterEffect(e2)
-end
-s.listed_names={900000000,900000002}
-function s.efilter(c)
-	return c:IsFaceup() and c:IsCode(900000000)
-end
-function s.eqtg(e,tp,eg,ep,ev,re,r,rp,chk,chkc)
-	if chkc then return chkc:IsLocation(LOCATION_MZONE) and chkc:IsControler(tp) and s.efilter(chkc) end
-	if chk==0 then return Duel.GetLocationCount(tp,LOCATION_SZONE)>0
-		and Duel.IsExistingTarget(s.efilter,tp,LOCATION_MZONE,0,1,nil) end
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_EQUIP)
-	Duel.SelectTarget(tp,s.efilter,tp,LOCATION_MZONE,0,1,1,nil)
-end
-function s.eqop(e,tp,eg,ep,ev,re,r,rp)
-	local c=e:GetHandler()
-	if not c:IsRelateToEffect(e) then return end
-	if c:IsLocation(LOCATION_MZONE) and c:IsFacedown() then return end
-	local tc=Duel.GetFirstTarget()
-	if Duel.GetLocationCount(tp,LOCATION_SZONE)<=0 or tc:GetControler()~=tp or tc:IsFacedown() or not tc:IsRelateToEffect(e) then
-		Duel.SendtoGrave(c,REASON_EFFECT)
-		return
-	end
-	Duel.Equip(tp,c,tc,true)
+	--fusion material
+	c:EnableReviveLimit()
+	Fusion.AddProcMix(c,true,true,15025844,91152256)
+	--spsummon condition
 	local e1=Effect.CreateEffect(c)
 	e1:SetType(EFFECT_TYPE_SINGLE)
-	e1:SetCode(EFFECT_EQUIP_LIMIT)
-	e1:SetReset(RESET_EVENT+RESETS_STANDARD)
-	e1:SetValue(s.eqlimit)
-	e1:SetLabelObject(tc)
+	e1:SetProperty(EFFECT_FLAG_CANNOT_DISABLE+EFFECT_FLAG_UNCOPYABLE)
+	e1:SetCode(EFFECT_SPSUMMON_CONDITION)
+	e1:SetValue(aux.fuslimit)
 	c:RegisterEffect(e1)
+	--Becomes a Normal Monster
 	local e2=Effect.CreateEffect(c)
-	e2:SetType(EFFECT_TYPE_EQUIP)
-	e2:SetCode(EFFECT_UPDATE_ATTACK)
-	e2:SetValue(500)
-	e2:SetReset(RESET_EVENT+RESETS_STANDARD)
+	e2:SetType(EFFECT_TYPE_SINGLE)
+	e2:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
+	e2:SetCode(EFFECT_ADD_TYPE)
+	e2:SetRange(LOCATION_GRAVE+LOCATION_EXTRA)
+	e2:SetValue(TYPE_NORMAL)
 	c:RegisterEffect(e2)
-	local e3=Effect.CreateEffect(c)
-	e3:SetType(EFFECT_TYPE_EQUIP)
-	e3:SetCode(EFFECT_UPDATE_ATTACK)
-	e3:SetValue(s.atkval)
-	e3:SetReset(RESET_EVENT+RESETS_STANDARD)
+	local e3=e2:Clone()
+	e3:SetCode(EFFECT_REMOVE_TYPE)
+	e3:SetValue(TYPE_EFFECT)
 	c:RegisterEffect(e3)
-	local e4=e3:Clone()
-	e4:SetCode(EFFECT_UPDATE_DEFENSE)
+	--Immune
+	local e4=Effect.CreateEffect(c)
+	e4:SetType(EFFECT_TYPE_SINGLE)
+	e4:SetCode(EFFECT_CANNOT_BE_EFFECT_TARGET)
+	e4:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
+	e4:SetRange(LOCATION_MZONE)
+	e4:SetValue(1)
 	c:RegisterEffect(e4)
+	local e5=e4:Clone()
+	e5:SetCode(EFFECT_INDESTRUCTABLE_EFFECT)
+	e5:SetValue(1)
+	c:RegisterEffect(e5)
+	--Opponent cannot activate cards/effects during your Battle Phase
+	local e6=Effect.CreateEffect(c)
+	e6:SetType(EFFECT_TYPE_FIELD)
+	e6:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
+	e6:SetCode(EFFECT_CANNOT_ACTIVATE)
+	e6:SetTargetRange(0,1)
+	e6:SetRange(LOCATION_MZONE)
+	e6:SetCondition(function(e) return Duel.IsBattlePhase() end)
+	e6:SetValue(1)
+	c:RegisterEffect(e6)
+	--ATK change
+	local e7=Effect.CreateEffect(c)
+	e7:SetDescription(aux.Stringid(id,2))
+	e7:SetCategory(CATEGORY_ATKCHANGE)
+	e7:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_F)
+	e7:SetRange(LOCATION_MZONE)
+	e7:SetCode(EVENT_PRE_DAMAGE_CALCULATE)
+	e7:SetCountLimit(1)
+	e7:SetCondition(s.atkcon)
+	e7:SetOperation(s.atkop)
+	c:RegisterEffect(e7)
+	local e8=e7:Clone()
+	e8:SetCategory(CATEGORY_DEFCHANGE)
+	c:RegisterEffect(e8)
 end
-function s.eqlimit(e,c)
-	return c==e:GetLabelObject()
+function s.atkcon(e,tp,eg,ep,ev,re,r,rp)
+	return e:GetHandler():GetBattleTarget()~=nil
 end
-function s.atkval(e,c)
-	return Duel.GetMatchingGroupCount(aux.FilterFaceupFunction(Card.IsAttribute,ATTRIBUTE_DARK),0,LOCATION_MZONE+LOCATION_GRAVE,LOCATION_MZONE+LOCATION_GRAVE,nil)*100
-end
-function s.filter(c)
-	return c:IsCode(900000002) and c:IsAbleToHand()
-end
-function s.target(e,tp,eg,ep,ev,re,r,rp,chk)
-	if chk==0 then return true end
-	Duel.SetOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,LOCATION_DECK)
-end
-function s.operation(e,tp,eg,ep,ev,re,r,rp)
-	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
-	local tc=Duel.GetFirstMatchingCard(s.filter,tp,LOCATION_DECK,0,nil)
-	if tc~=nil then
-		Duel.SendtoHand(tc,nil,REASON_EFFECT)
-		Duel.ConfirmCards(1-tp,tc)
+function s.atkop(e,tp,eg,ep,ev,re,r,rp)
+	local c=e:GetHandler()
+	if c:IsRelateToEffect(e) and c:IsFaceup() then
+		local e1=Effect.CreateEffect(c)
+		e1:SetType(EFFECT_TYPE_SINGLE)
+		e1:SetCode(EFFECT_SET_ATTACK_FINAL)
+		e1:SetValue(c:GetAttack()*2)
+		e1:SetReset(RESET_EVENT+RESETS_STANDARD_DISABLE+RESET_PHASE+PHASE_END)
+		c:RegisterEffect(e1)
+		local e2=e1:Clone()
+		e2:SetCode(EFFECT_SET_DEFENSE_FINAL)
+		e2:SetValue(c:GetDefense()*2)
+		c:RegisterEffect(e2)
 	end
 end
