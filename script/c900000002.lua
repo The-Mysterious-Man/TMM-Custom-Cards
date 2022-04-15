@@ -21,6 +21,12 @@ function s.initial_effect(c)
 	e3:SetTargetRange(0,LOCATION_MZONE)
 	e3:SetValue(s.val)
 	c:RegisterEffect(e3)
+	local e6=e3:Clone()
+	e6:SetValue(s.val2)
+	c:RegisterEffect(e6)
+	local e7=e3:Clone()
+	e7:SetValue(s.val3)
+	c:RegisterEffect(e7)
 	--atk limit
 	local e4=Effect.CreateEffect(c)
 	e4:SetType(EFFECT_TYPE_FIELD)
@@ -41,7 +47,13 @@ function s.initial_effect(c)
 	c:RegisterEffect(e5)
 end
 function s.val(e,c)
-	return c:GetLevel()*-300 and c:GetRank()*-300 and c:GetLink()*1000
+	return c:GetLevel()*-300
+end
+function s.va2(e,c)
+	return c:GetRank()*-300
+end
+function s.va3(e,c)
+	return c:GetLink()*-1000
 end
 function s.tglimit(e,c)
 	return c~=e:GetHandler()
