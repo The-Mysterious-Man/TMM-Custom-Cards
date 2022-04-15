@@ -49,10 +49,10 @@ end
 function s.val(e,c)
 	return c:GetLevel()*-300
 end
-function s.va2(e,c)
+function s.val2(e,c)
 	return c:GetRank()*-300
 end
-function s.va3(e,c)
+function s.val3(e,c)
 	return c:GetLink()*-1000
 end
 function s.tglimit(e,c)
