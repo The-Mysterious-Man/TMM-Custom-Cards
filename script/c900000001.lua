@@ -1,77 +1,110 @@
--- Mystical Guardian Elf
+-- Apprentice Magician Girl
 local s,id=GetID()
 function s.initial_effect(c)
-	--fusion material
-	c:EnableReviveLimit()
-	Fusion.AddProcMix(c,true,true,15025844,91152256)
-	--Becomes a Normal Monster
+	--special summon
 	local e1=Effect.CreateEffect(c)
-	e1:SetType(EFFECT_TYPE_SINGLE)
-	e1:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
-	e1:SetCode(EFFECT_ADD_TYPE)
-	e1:SetRange(LOCATION_GRAVE+LOCATION_MZONE)
-	e1:SetValue(TYPE_NORMAL)
+	e1:SetType(EFFECT_TYPE_FIELD)
+	e1:SetCode(EFFECT_SPSUMMON_PROC)
+	e1:SetProperty(EFFECT_FLAG_UNCOPYABLE)
+	e1:SetRange(LOCATION_HAND)
+	e1:SetCondition(s.spcon)
+	e1:SetTarget(s.sptg)
+	e1:SetOperation(s.spop)
 	c:RegisterEffect(e1)
-	local e2=e1:Clone()
-	e2:SetCode(EFFECT_REMOVE_TYPE)
-	e2:SetValue(TYPE_FUSION)
+	--search
+	local e2=Effect.CreateEffect(c)
+	e2:SetDescription(aux.Stringid(id,0))
+	e2:SetCategory(CATEGORY_TOHAND+CATEGORY_SEARCH)
+	e2:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
+	e2:SetCode(EVENT_SUMMON_SUCCESS)
+	e2:SetProperty(EFFECT_FLAG_DELAY)
+	e2:SetTarget(s.thtg)
+	e2:SetOperation(s.thop)
 	c:RegisterEffect(e2)
-	local e3=e1:Clone()
-	e3:SetCode(EFFECT_REMOVE_TYPE)
-	e3:SetValue(TYPE_EFFECT)
+	local e3=e2:Clone()
+	e3:SetCode(EVENT_SPSUMMON_SUCCESS)
 	c:RegisterEffect(e3)
-	--Immune
+	--special summon
 	local e4=Effect.CreateEffect(c)
-	e4:SetType(EFFECT_TYPE_SINGLE)
-	e4:SetCode(EFFECT_CANNOT_BE_EFFECT_TARGET)
-	e4:SetProperty(EFFECT_FLAG_SINGLE_RANGE)
-	e4:SetRange(LOCATION_MZONE)
-	e4:SetValue(1)
+	e4:SetDescription(aux.Stringid(id,1))
+	e4:SetCategory(CATEGORY_SPECIAL_SUMMON)
+	e4:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_O)
+	e4:SetProperty(EFFECT_FLAG_DELAY)
+	e4:SetCode(EVENT_DESTROYED)
+	e4:SetCountLimit(1,{id,1})
+	e4:SetCondition(s.spcon2)
+	e4:SetOperation(s.spop2)
 	c:RegisterEffect(e4)
-	local e5=e4:Clone()
-	e5:SetCode(EFFECT_INDESTRUCTABLE_EFFECT)
-	e5:SetValue(1)
-	c:RegisterEffect(e5)
-	--Opponent cannot activate cards/effects during your Battle Phase
-	local e6=Effect.CreateEffect(c)
-	e6:SetType(EFFECT_TYPE_FIELD)
-	e6:SetProperty(EFFECT_FLAG_PLAYER_TARGET)
-	e6:SetCode(EFFECT_CANNOT_ACTIVATE)
-	e6:SetTargetRange(0,1)
-	e6:SetRange(LOCATION_MZONE)
-	e6:SetCondition(function(e) return Duel.IsBattlePhase() end)
-	e6:SetValue(1)
-	c:RegisterEffect(e6)
-	--ATK change
-	local e7=Effect.CreateEffect(c)
-	e7:SetDescription(aux.Stringid(id,2))
-	e7:SetCategory(CATEGORY_ATKCHANGE)
-	e7:SetType(EFFECT_TYPE_SINGLE+EFFECT_TYPE_TRIGGER_F)
-	e7:SetRange(LOCATION_MZONE)
-	e7:SetCode(EVENT_PRE_DAMAGE_CALCULATE)
-	e7:SetCountLimit(1,id)
-	e7:SetCondition(s.atkcon)
-	e7:SetOperation(s.atkop)
-	c:RegisterEffect(e7)
-	local e8=e7:Clone()
-	e8:SetCategory(CATEGORY_DEFCHANGE)
-	c:RegisterEffect(e8)
+	if not GhostBelleTable then GhostBelleTable={} end
+	table.insert(GhostBelleTable,e4)
 end
-function s.atkcon(e,tp,eg,ep,ev,re,r,rp)
-	return e:GetHandler():GetBattleTarget()~=nil
+s.listed_names={CARD_DARK_MAGICIAN}
+function s.spcon(e,c)
+	if c==nil then return true end
+	local tp=c:GetControler()
+	local rg=Duel.GetMatchingGroup(Card.IsDiscardable,tp,LOCATION_HAND,0,e:GetHandler())
+	return aux.SelectUnselectGroup(rg,e,tp,1,1,aux.ChkfMMZ(1),0,c)
 end
-function s.atkop(e,tp,eg,ep,ev,re,r,rp)
-	local c=e:GetHandler()
-	if c:IsRelateToEffect(e) and c:IsFaceup() then
-		local e1=Effect.CreateEffect(c)
-		e1:SetType(EFFECT_TYPE_SINGLE)
-		e1:SetCode(EFFECT_SET_ATTACK_FINAL)
-		e1:SetValue(c:GetAttack()*2)
-		e1:SetReset(RESET_EVENT+RESETS_STANDARD_DISABLE+RESET_PHASE+PHASE_END)
-		c:RegisterEffect(e1)
-		local e2=e1:Clone()
-		e2:SetCode(EFFECT_SET_DEFENSE_FINAL)
-		e2:SetValue(c:GetDefense()*2)
-		c:RegisterEffect(e2)
+function s.sptg(e,tp,eg,ep,ev,re,r,rp,c)
+	local rg=Duel.GetMatchingGroup(Card.IsDiscardable,tp,LOCATION_HAND,0,e:GetHandler())
+	local g=aux.SelectUnselectGroup(rg,e,tp,1,1,aux.ChkfMMZ(1),1,tp,HINTMSG_DISCARD,nil,nil,true)
+	if #g>0 then
+		g:KeepAlive()
+		e:SetLabelObject(g)
+		return true
+	end
+	return false
+end
+function s.spop(e,tp,eg,ep,ev,re,r,rp,c)
+	local g=e:GetLabelObject()
+	if not g then return end
+	Duel.SendtoGrave(g,REASON_DISCARD+REASON_COST)
+	g:DeleteGroup()
+end
+function s.filter(c)
+	return c:IsCode(CARD_DARK_MAGICIAN) and c:IsAbleToHand() or c:IsSetCard(0x20a2) and c:IsAbleToHand()
+end
+function s.thtg(e,tp,eg,ep,ev,re,r,rp,chk)
+	if chk==0 then return Duel.IsExistingMatchingCard(s.filter,tp,LOCATION_DECK,0,1,nil) end
+	Duel.SetOperationInfo(0,CATEGORY_TOHAND,nil,1,tp,LOCATION_DECK)
+end
+function s.thop(e,tp,eg,ep,ev,re,r,rp)
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_ATOHAND)
+	local g=Duel.SelectMatchingCard(tp,s.filter,tp,LOCATION_DECK,0,1,1,nil)
+	if #g>0 then
+		Duel.SendtoHand(g,nil,REASON_EFFECT)
+		Duel.ConfirmCards(1-tp,g)
+	end
+end
+function s.spcon2(e,tp,eg,ep,ev,re,r,rp)
+	return (r&REASON_EFFECT+REASON_BATTLE)~=0
+end
+function s.spop2(e,tp,eg,ep,ev,re,r,rp)
+	local e1=Effect.CreateEffect(e:GetHandler())
+	e1:SetType(EFFECT_TYPE_FIELD+EFFECT_TYPE_CONTINUOUS)
+	e1:SetCode(EVENT_PHASE+PHASE_STANDBY)
+	e1:SetCountLimit(1)
+	e1:SetLabel(Duel.GetTurnCount())
+	e1:SetCondition(s.spcon1)
+	e1:SetOperation(s.spop1)
+	if Duel.IsTurnPlayer(tp) then
+		e1:SetReset(RESET_PHASE+PHASE_END+RESET_OPPO_TURN,1)
+	else
+		e1:SetReset(RESET_PHASE+PHASE_END+RESET_SELF_TURN,1)
+	end
+	Duel.RegisterEffect(e1,tp)
+end
+
+function s.spcon1(e,tp,eg,ep,ev,re,r,rp)
+	return Duel.GetTurnCount()~=e:GetLabel()
+end
+function s.filter1(c,e,tp)
+	return c:IsRace(RACE_SPELLCASTER) and c:IsCanBeSpecialSummoned(e,0,tp,false,false)
+end
+function s.spop1(e,tp,eg,ep,ev,re,r,rp)
+	Duel.Hint(HINT_SELECTMSG,tp,HINTMSG_SPSUMMON)
+	local g=Duel.SelectMatchingCard(tp,aux.NecroValleyFilter(s.filter1),tp,LOCATION_GRAVE,0,1,1,nil,e,tp)
+	if #g>0 then
+		Duel.SpecialSummon(g,0,tp,tp,false,false,POS_FACEUP)
 	end
 end
